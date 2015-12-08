@@ -40,22 +40,28 @@ angular.module('ui-notification').provider('Notification', function() {
             }
 
             args.scope = args.scope ? args.scope : $rootScope;
-            if (args.externalCache && args.template) {
-                args.template = args.template;
-            } else if (args.templateUrl) {
-                args.template = args.templateUrl;
-            } else {
-                args.template = options.templateUrl;
-            }
             args.delay = !angular.isUndefined(args.delay) ? args.delay : delay;
             args.type = t ? t : '';
             args.positionY = args.positionY ? args.positionY : options.positionY;
             args.positionX = args.positionX ? args.positionX : options.positionX;
             args.replaceMessage = args.replaceMessage ? args.replaceMessage : options.replaceMessage;
             args.onClose = args.onClose ? args.onClose : options.onClose;
+            if (args.externalCache && args.template) {
+                args.template = args.template;
+                compile(args.template);
+            } else if (args.templateUrl) {
+                args.template = args.templateUrl;
+                $http.get(args.template,{cache: $templateCache}).success(compile).error(function(data){
+                    throw new Error('Template ('+args.template+') could not be loaded. ' + data);
+                });
+            } else {
+                args.template = options.templateUrl;
+                $http.get(args.template,{cache: $templateCache}).success(compile).error(function(data){
+                    throw new Error('Template ('+args.template+') could not be loaded. ' + data);
+                });
+            }
 
-            $http.get(args.template,{cache: $templateCache}).success(function(template) {
-
+            function compile (template) {
                 var scope = args.scope.$new();
                 scope.message = $sce.trustAsHtml(args.message);
                 scope.title = $sce.trustAsHtml(args.title);
@@ -75,8 +81,8 @@ angular.module('ui-notification').provider('Notification', function() {
                             element.addClass('killed');
                             continue;
                         }
-                        var elHeight = parseInt(element[0].offsetHeight);
-                        var elWidth  = parseInt(element[0].offsetWidth);
+                        var elHeight = parseInt(element[0].offsetHeight, 10);
+                        var elWidth  = parseInt(element[0].offsetWidth, 10);
                         var position = lastPosition[element._positionY+element._positionX];
 
                         if ((top + elHeight) > window.innerHeight) {
@@ -152,11 +158,7 @@ angular.module('ui-notification').provider('Notification', function() {
                 }
 
                 deferred.resolve(scope);
-
-            }).error(function(data){
-                throw new Error('Template ('+args.template+') could not be loaded. ' + data);
-            });
-
+            }
             return deferred.promise;
         };
 
