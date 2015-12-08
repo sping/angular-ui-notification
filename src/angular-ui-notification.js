@@ -40,9 +40,13 @@ angular.module('ui-notification').provider('Notification', function() {
             }
 
             args.scope = args.scope ? args.scope : $rootScope;
-            args.template = args.externalCache && args.template ? args.template
-                : args.templateUrl ? args.templateUrl
-                    : options.templateUrl;
+            if (args.externalCache && args.template) {
+                args.template = args.template;
+            } else if (args.templateUrl) {
+                args.template = args.templateUrl;
+            } else {
+                args.template = options.templateUrl;
+            }
             args.delay = !angular.isUndefined(args.delay) ? args.delay : delay;
             args.type = t ? t : '';
             args.positionY = args.positionY ? args.positionY : options.positionY;
